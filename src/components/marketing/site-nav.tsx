@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { MarketingMobileNav } from "@/components/marketing/marketing-mobile-nav";
 
 const links = [
   { href: "#how-it-works", label: "How it works" },
@@ -25,7 +26,8 @@ export function SiteNav() {
             </Link>
           ))}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <MarketingMobileNav />
           <Button variant="ghost" size="sm" render={<Link href="/login" />}>
             Log in
           </Button>

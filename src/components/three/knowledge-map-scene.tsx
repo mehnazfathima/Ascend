@@ -2,7 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { OrbitControls, Line } from "@react-three/drei";
+import { Line } from "@react-three/drei";
 import * as THREE from "three";
 
 const LEVEL_COUNT = 11;
@@ -65,18 +65,19 @@ export function KnowledgeMapScene() {
   );
 
   return (
-    <Canvas camera={{ position: [5, 1.5, 5], fov: 42 }} dpr={[1, 1.5]}>
+    <Canvas
+      camera={{ position: [5, 1.5, 5], fov: 42 }}
+      dpr={[1, 1.5]}
+      style={{ touchAction: "pan-y" }}
+      // Purely decorative — the group animates itself via useFrame below, so
+      // no orbit/drag controls are attached. Without them, and with native
+      // touch-scroll explicitly allowed, a finger swipe over this canvas on
+      // mobile scrolls the page normally instead of getting captured by the
+      // canvas (react-three-fiber sets touch-action: none by default).
+    >
       <ambientLight intensity={0.7} />
       <pointLight position={[5, 5, 5]} intensity={40} />
       <Nodes reducedMotion={reducedMotion} />
-      <OrbitControls
-        enablePan={false}
-        enableZoom={false}
-        autoRotate={!reducedMotion}
-        autoRotateSpeed={0.6}
-        minPolarAngle={Math.PI / 2.6}
-        maxPolarAngle={Math.PI / 1.7}
-      />
     </Canvas>
   );
 }
