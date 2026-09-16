@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Manrope, Fraunces, JetBrains_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
@@ -29,6 +29,17 @@ export const metadata: Metadata = {
   },
   description:
     "An interactive learning platform that takes you from your first AI concept to building real-world AI projects.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "ASCEND",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#00686d",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
