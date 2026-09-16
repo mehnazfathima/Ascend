@@ -17,6 +17,7 @@ export function ForgotPasswordForm() {
   const [submitting, setSubmitting] = useState(false);
   const [devResetUrl, setDevResetUrl] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const {
     register,
@@ -26,10 +27,16 @@ export function ForgotPasswordForm() {
 
   async function onSubmit(values: ForgotPasswordInput) {
     setSubmitting(true);
-    const result = await requestPasswordResetAction(values);
-    setSubmitting(false);
-    setSent(true);
-    if (result.ok && result.resetUrl) setDevResetUrl(result.resetUrl);
+    setServerError(null);
+    try {
+      const result = await requestPasswordResetAction(values);
+      setSent(true);
+      if (result.ok && result.resetUrl) setDevResetUrl(result.resetUrl);
+    } catch {
+      setServerError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (sent) {
@@ -70,6 +77,7 @@ export function ForgotPasswordForm() {
             <p className="text-xs text-destructive">{errors.email.message}</p>
           )}
         </div>
+        {serverError && <p className="text-sm text-destructive">{serverError}</p>}
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? "Sending…" : "Send reset link"}
         </Button>

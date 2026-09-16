@@ -26,24 +26,28 @@ export function SignUpForm() {
   async function onSubmit(values: SignUpInput) {
     setServerError(null);
     setSubmitting(true);
-    const result = await signUpAction(values);
-    if (!result.ok) {
-      setServerError(result.error);
+    try {
+      const result = await signUpAction(values);
+      if (!result.ok) {
+        setServerError(result.error);
+        return;
+      }
+      const signInResult = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
+      if (signInResult?.error) {
+        router.push("/login");
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setServerError("Something went wrong creating your account. Please try again.");
+    } finally {
       setSubmitting(false);
-      return;
     }
-    const signInResult = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false,
-    });
-    setSubmitting(false);
-    if (signInResult?.error) {
-      router.push("/login");
-      return;
-    }
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (

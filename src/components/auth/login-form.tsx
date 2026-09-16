@@ -28,18 +28,23 @@ export function LoginForm() {
   async function onSubmit(values: LoginInput) {
     setServerError(null);
     setSubmitting(true);
-    const result = await signIn("credentials", {
-      email: values.email,
-      password: values.password,
-      redirect: false,
-    });
-    setSubmitting(false);
-    if (result?.error) {
-      setServerError("Incorrect email or password.");
-      return;
+    try {
+      const result = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
+      if (result?.error) {
+        setServerError("Incorrect email or password.");
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setServerError("Something went wrong logging in. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (

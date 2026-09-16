@@ -28,13 +28,18 @@ export function ResetPasswordForm({ token }: { token: string }) {
   async function onSubmit(values: FormInput) {
     setServerError(null);
     setSubmitting(true);
-    const result = await resetPasswordAction({ token, ...values });
-    setSubmitting(false);
-    if (!result.ok) {
-      setServerError(result.error);
-      return;
+    try {
+      const result = await resetPasswordAction({ token, ...values });
+      if (!result.ok) {
+        setServerError(result.error);
+        return;
+      }
+      router.push("/login?reset=success");
+    } catch {
+      setServerError("Something went wrong. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
-    router.push("/login?reset=success");
   }
 
   return (

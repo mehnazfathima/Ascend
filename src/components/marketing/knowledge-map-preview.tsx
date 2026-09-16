@@ -1,4 +1,4 @@
-import { KnowledgeMap3D } from "@/components/three/knowledge-map-3d";
+import { KnowledgeMapVisual } from "@/components/marketing/knowledge-map-visual";
 
 const levels = [
   { index: 0, title: "AI Foundations", theme: "var(--chart-1)" },
@@ -46,7 +46,7 @@ export function KnowledgeMapPreview() {
               </ol>
             </div>
           </div>
-          <KnowledgeMap3D />
+          <KnowledgeMapVisual />
         </div>
       </div>
     </section>

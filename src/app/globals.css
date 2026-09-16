@@ -96,6 +96,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body {
+    /* Safety net: one overflowing element anywhere on the page shouldn't be
+       able to make the whole document pannable sideways on mobile. */
+    @apply overflow-x-hidden;
+  }
   body {
     @apply bg-background text-foreground;
   }
@@ -105,6 +110,16 @@
   h1, h2, h3, h4 {
     @apply font-heading;
   }
+}
+
+@keyframes spin-slow {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 70s linear infinite;
+  transform-origin: center;
 }
 
 @media (prefers-reduced-motion: reduce) {

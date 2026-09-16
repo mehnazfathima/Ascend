@@ -21,22 +21,27 @@ export async function signUpAction(input: unknown): Promise<ActionResult> {
   }
   const { name, email, password } = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { ok: false, error: "An account with this email already exists." };
+  try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return { ok: false, error: "An account with this email already exists." };
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        stats: { create: { xp: 0, streakCount: 0 } },
+      },
+    });
+
+    return { ok: true };
+  } catch (error) {
+    console.error("signUpAction failed:", error);
+    return { ok: false, error: "Something went wrong creating your account. Please try again." };
   }
-
-  const passwordHash = await bcrypt.hash(password, 12);
-  await prisma.user.create({
-    data: {
-      name,
-      email,
-      passwordHash,
-      stats: { create: { xp: 0, streakCount: 0 } },
-    },
-  });
-
-  return { ok: true };
 }
 
 export async function loginAction(input: unknown): Promise<ActionResult> {
