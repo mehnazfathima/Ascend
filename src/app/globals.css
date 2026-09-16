@@ -1,0 +1,117 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
+
+/* No dark mode in this app — scope `dark:` to an ancestor `.dark` class that is
+   never applied, instead of Tailwind's default `prefers-color-scheme` media query,
+   so shadcn-generated components' built-in dark: utilities stay permanently inert. */
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-manrope);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-fraunces);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Warm peach-cream base with a deep teal contrast accent. One fixed theme — no dark mode. */
+:root {
+  --background: oklch(0.9650 0.0220 51);
+  --foreground: oklch(0.2600 0.0400 32);
+  --card: oklch(0.9950 0.0080 51);
+  --card-foreground: oklch(0.2600 0.0400 32);
+  --popover: oklch(0.9950 0.0080 51);
+  --popover-foreground: oklch(0.2600 0.0400 32);
+  --primary: oklch(0.4700 0.0950 200);
+  --primary-foreground: oklch(0.9800 0.0100 200);
+  --secondary: oklch(0.9250 0.0300 48);
+  --secondary-foreground: oklch(0.2800 0.0400 35);
+  --muted: oklch(0.9250 0.0300 48);
+  --muted-foreground: oklch(0.4500 0.0350 38);
+  --accent: oklch(0.9000 0.0400 195);
+  --accent-foreground: oklch(0.2800 0.0550 195);
+  --success: oklch(0.5100 0.1000 155);
+  --success-foreground: oklch(0.9800 0.0120 145);
+  --destructive: oklch(0.5500 0.2000 25);
+  --border: oklch(0.8750 0.0280 48);
+  --input: oklch(0.8750 0.0280 48);
+  --ring: oklch(0.4700 0.0950 200);
+  --chart-1: oklch(0.4700 0.0950 200);
+  --chart-2: oklch(0.5100 0.1000 155);
+  --chart-3: oklch(0.7500 0.1300 80);
+  --chart-4: oklch(0.5200 0.1100 340);
+  --chart-5: oklch(0.5900 0.1350 40);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.9350 0.0320 49);
+  --sidebar-foreground: oklch(0.2600 0.0400 32);
+  --sidebar-primary: oklch(0.4700 0.0950 200);
+  --sidebar-primary-foreground: oklch(0.9800 0.0100 200);
+  --sidebar-accent: oklch(0.9000 0.0400 195);
+  --sidebar-accent-foreground: oklch(0.2800 0.0550 195);
+  --sidebar-border: oklch(0.8750 0.0280 48);
+  --sidebar-ring: oklch(0.4700 0.0950 200);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

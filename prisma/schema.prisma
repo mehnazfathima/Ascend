@@ -1,0 +1,293 @@
+// ASCEND data model.
+// NOTE: running on SQLite for local dev (zero-install). Enums and native
+// scalar-list columns are intentionally avoided so this schema ports to
+// Postgres later with only a datasource/provider change. Enum-like fields
+// use String and are validated against TS union types in src/lib/constants.ts.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Auth / Users ----------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  passwordHash  String
+  image         String?
+  role          String    @default("STUDENT") // STUDENT | ADMIN
+  disabled      Boolean   @default(false)
+  bio           String?
+  goal          String? // freeform career goal / motivation
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  progress          UserConceptProgress[]
+  roadmaps          RoadmapInstance[]
+  skillTestAttempts SkillTestAttempt[]
+  arenaAttempts     ArenaAttempt[]
+  projects          UserProject[]
+  stats             UserStats?
+  resetTokens       PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model UserStats {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  xp            Int      @default(0)
+  streakCount   Int      @default(0)
+  lastActiveOn  DateTime?
+  updatedAt     DateTime @updatedAt
+}
+
+// ---------- Content: Knowledge Map ----------
+
+model Level {
+  id          String    @id @default(cuid())
+  index       Int       @unique // 0..10
+  slug        String    @unique
+  title       String
+  description String
+  colorTheme  String    @default("ember") // ember | forest | gold | slate | clay
+  concepts    Concept[]
+}
+
+model Concept {
+  id                String   @id @default(cuid())
+  slug              String   @unique
+  title             String
+  cardLabel         String   @default("") // short familiar name shown on the grid card, e.g. "RAG"
+  oneLiner          String
+  levelId           String
+  level             Level    @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  order             Int      @default(0)
+  estimatedMinutes  Int      @default(15)
+  realWorldExamples String // JSON string array
+  tags              String // JSON string array
+  published         Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  explanations ConceptExplanation[]
+  sections     ConceptSection[]
+  progress     UserConceptProgress[]
+
+  prerequisiteFor ConceptPrerequisite[] @relation("prereqFor")
+  prerequisites   ConceptPrerequisite[] @relation("prereqOf")
+
+  careerLinks   CareerConcept[]
+  projectLinks  ProjectConcept[]
+}
+
+model ConceptPrerequisite {
+  id            String  @id @default(cuid())
+  conceptId     String // the concept that has a prerequisite
+  concept       Concept @relation("prereqOf", fields: [conceptId], references: [id], onDelete: Cascade)
+  prerequisiteId String // the concept required beforehand
+  prerequisite  Concept @relation("prereqFor", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@unique([conceptId, prerequisiteId])
+}
+
+// The 3-level explanation system: SIMPLE | UNDERSTAND | DEEP
+model ConceptExplanation {
+  id        String  @id @default(cuid())
+  conceptId String
+  concept   Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  depth     String // SIMPLE | UNDERSTAND | DEEP
+  content   String // markdown
+
+  @@unique([conceptId, depth])
+}
+
+// Structured concept-card sections: visualize / try it / code / where used ...
+model ConceptSection {
+  id           String  @id @default(cuid())
+  conceptId    String
+  concept      Concept @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  kind         String // VISUALIZE | REAL_WORLD | TRY_IT | CODE | WHERE_USED
+  title        String
+  body         String? // markdown
+  code         String?
+  visualizerKey String? // maps to a React visualizer component, e.g. "linear-regression"
+  data         String? // JSON string for structured widget config (e.g. try-it challenge)
+  order        Int     @default(0)
+}
+
+model UserConceptProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conceptId   String
+  concept     Concept   @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  status      String    @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED
+  completedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([userId, conceptId])
+}
+
+// ---------- Roadmap Generator ----------
+
+model RoadmapInstance {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String
+  inputs         String // JSON: survey answers
+  generatedSteps String // JSON: ordered step list
+  createdAt      DateTime @default(now())
+}
+
+// ---------- Skill Test ----------
+
+model SkillTestQuestion {
+  id         String @id @default(cuid())
+  type       String // MCQ | SCENARIO | MODEL_SELECT | CODE_READ | DEBUG | ORDER_STEPS
+  category   String // e.g. "ml-foundations", "python", "math", "deep-learning"
+  difficulty String @default("MEDIUM") // EASY | MEDIUM | HARD
+  prompt     String
+  data       String // JSON: options/answer/explanation, shape depends on `type`
+  published  Boolean @default(true)
+
+  answers SkillTestAnswer[]
+}
+
+model SkillTestAttempt {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startedAt     DateTime @default(now())
+  completedAt   DateTime?
+  scorePercent  Int?
+  resultsJson   String? // JSON: per-category breakdown + recommendations
+
+  answers SkillTestAnswer[]
+}
+
+model SkillTestAnswer {
+  id         String            @id @default(cuid())
+  attemptId  String
+  attempt    SkillTestAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  question   SkillTestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answerJson String
+  correct    Boolean
+}
+
+// ---------- AI Arena ----------
+
+model ArenaChallenge {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  category    String // ai-fundamentals | python | math | ml | deep-learning | cv | nlp | genai
+  type        String // MCQ | DRAG_DROP | MATCH | ORDER_STEPS | SPOT_MISTAKE | CODE | PREDICT_OUTPUT
+  difficulty  String  @default("EASY") // EASY | MEDIUM | HARD
+  prompt      String
+  data        String // JSON, shape depends on `type`
+  explanation String
+  xpReward    Int     @default(10)
+  published   Boolean @default(true)
+
+  attempts ArenaAttempt[]
+}
+
+model ArenaAttempt {
+  id          String         @id @default(cuid())
+  userId      String
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challengeId String
+  challenge   ArenaChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  correct     Boolean
+  xpEarned    Int
+  attemptedAt DateTime       @default(now())
+}
+
+// ---------- Career Map ----------
+
+model CareerPath {
+  id                  String   @id @default(cuid())
+  slug                String   @unique
+  title               String
+  description         String
+  skills              String // JSON string array
+  tools               String // JSON string array
+  exampleApplications String // JSON string array
+  order               Int      @default(0)
+
+  concepts CareerConcept[]
+  projects ProjectTemplate[]
+}
+
+model CareerConcept {
+  id         String     @id @default(cuid())
+  careerId   String
+  career     CareerPath @relation(fields: [careerId], references: [id], onDelete: Cascade)
+  conceptId  String
+  concept    Concept    @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([careerId, conceptId])
+}
+
+// ---------- Project Generator ----------
+
+model ProjectTemplate {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  title            String
+  description      String
+  domain           String // e.g. "computer-vision", "nlp", "tabular", "genai"
+  difficulty       String   @default("BEGINNER") // BEGINNER | INTERMEDIATE | ADVANCED | PORTFOLIO
+  skillsPracticed  String // JSON string array
+  techStack        String // JSON string array
+  milestones       String // JSON: ordered milestone list
+  expectedResult   String
+  advancedIdeas    String // JSON string array
+  careerId         String?
+  career           CareerPath? @relation(fields: [careerId], references: [id])
+
+  requiredConcepts ProjectConcept[]
+  userProjects     UserProject[]
+}
+
+model ProjectConcept {
+  id        String          @id @default(cuid())
+  projectId String
+  project   ProjectTemplate @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  conceptId String
+  concept   Concept         @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, conceptId])
+}
+
+model UserProject {
+  id          String          @id @default(cuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     ProjectTemplate @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status      String          @default("SAVED") // SAVED | IN_PROGRESS | COMPLETED
+  startedAt   DateTime?
+  completedAt DateTime?
+  notes       String?
+
+  @@unique([userId, projectId])
+}
